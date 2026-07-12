@@ -29,6 +29,18 @@ const pool = new Pool({
   ssl: DATABASE_URL && !DATABASE_URL.includes("localhost")
     ? { rejectUnauthorized: false }
     : false,
+  // Serverless functions (Vercel, etc.) spin up fresh per-request, so a large
+  // long-lived pool works against you here — keep it small and fail fast
+  // instead of hanging until the function times out.
+  max: 3,
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 10000,
+});
+
+pool.on("error", (err) => {
+  // Catches errors on idle clients (e.g. connection dropped by the DB host)
+  // so they don't crash the process — just log them.
+  console.error("Unexpected Postgres pool error:", err);
 });
 
 async function initDb() {
@@ -97,7 +109,8 @@ app.post("/api/submit", upload.single("policyPdf"), async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    console.error("Submission error:", err);
+    console.error("Submission error:", err.message);
+    console.error(err.stack);
     res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 });
