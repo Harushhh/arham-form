@@ -37,7 +37,7 @@ async function initDb() {
       id SERIAL PRIMARY KEY,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       name TEXT NOT NULL,
-      designation TEXT NOT NULL,
+      empid TEXT NOT NULL, -- UPDATED: Changed from designation
       company TEXT NOT NULL,
       mobile TEXT NOT NULL,
       email TEXT NOT NULL,
@@ -68,9 +68,10 @@ app.use(express.json());
 // ---------- Submit endpoint ----------
 app.post("/api/submit", upload.single("policyPdf"), async (req, res) => {
   try {
-    const { name, designation, company, mobile, email, product } = req.body;
+    // UPDATED: Destructure empid instead of designation
+    const { name, empid, company, mobile, email, product } = req.body;
 
-    if (!name || !designation || !company || !mobile || !email || !product) {
+    if (!name || !empid || !company || !mobile || !email || !product) {
       return res.status(400).json({ error: "All fields are required." });
     }
     if (!req.file) {
@@ -79,11 +80,11 @@ app.post("/api/submit", upload.single("policyPdf"), async (req, res) => {
 
     await pool.query(
       `INSERT INTO submissions
-        (name, designation, company, mobile, email, product, file_name, file_mime, file_data)
+        (name, empid, company, mobile, email, product, file_name, file_mime, file_data)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
       [
         name,
-        designation,
+        empid, // UPDATED
         company,
         mobile,
         email,
@@ -129,8 +130,9 @@ function requireAdmin(req, res, next) {
 // ---------- Admin: list submissions ----------
 app.get("/admin", requireAdmin, async (req, res) => {
   try {
+    // UPDATED: Selected empid instead of designation
     const { rows } = await pool.query(
-      `SELECT id, created_at, name, designation, company, mobile, email, product, file_name
+      `SELECT id, created_at, name, empid, company, mobile, email, product, file_name
        FROM submissions ORDER BY created_at DESC`
     );
 
@@ -140,7 +142,7 @@ app.get("/admin", requireAdmin, async (req, res) => {
       <tr>
         <td>${new Date(r.created_at).toLocaleString()}</td>
         <td>${escapeHtml(r.name)}</td>
-        <td>${escapeHtml(r.designation)}</td>
+        <td>${escapeHtml(r.empid)}</td> <!-- UPDATED -->
         <td>${escapeHtml(r.company)}</td>
         <td>${escapeHtml(r.mobile)}</td>
         <td>${escapeHtml(r.email)}</td>
@@ -182,7 +184,7 @@ app.get("/admin", requireAdmin, async (req, res) => {
         </div>
         <table>
           <thead><tr>
-            <th>Date</th><th>Name</th><th>Designation</th><th>Company</th>
+            <th>Date</th><th>Name</th><th>Emp id</th><th>Company</th> <!-- UPDATED -->
             <th>Mobile</th><th>Email</th><th>Product</th><th>Policy PDF</th>
           </tr></thead>
           <tbody>${tableRows || `<tr><td colspan="8">No submissions yet.</td></tr>`}</tbody>
@@ -216,25 +218,24 @@ app.get("/admin/file/:id", requireAdmin, async (req, res) => {
 // ---------- Admin: export all submissions as CSV (opens in Excel) ----------
 app.get("/admin/export.csv", requireAdmin, async (req, res) => {
   try {
-    // UPDATED: Added 'id' to the SELECT query to generate the download link
+    // UPDATED: Selected empid instead of designation
     const { rows } = await pool.query(
-      `SELECT id, created_at, name, designation, company, mobile, email, product, file_name
+      `SELECT id, created_at, name, empid, company, mobile, email, product, file_name
        FROM submissions ORDER BY created_at DESC`
     );
 
-    // Capture the base URL for the clickable link
     const baseUrl = `${req.protocol}://${req.get("host")}`;
 
-    // UPDATED: Added "Policy PDF Link" to the headers array
+    // UPDATED: Header changed to Emp ID
     const headers = [
-      "Date", "Name", "Designation", "Company", "Mobile", "Email", "Product", "Policy PDF Filename", "Policy PDF Link"
+      "Date", "Name", "Emp ID", "Company", "Mobile", "Email", "Product", "Policy PDF Filename", "Policy PDF Link"
     ];
     
-    // UPDATED: Appended the full URL to the csvRows mapping
+    // UPDATED: Mapped r.empid to the row output
     const csvRows = rows.map((r) => [
       new Date(r.created_at).toLocaleString(),
       r.name,
-      r.designation,
+      r.empid, 
       r.company,
       r.mobile,
       r.email,

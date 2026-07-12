@@ -435,10 +435,11 @@
           <input type="text" name="name" autocomplete="name" placeholder="Full name" />
           <small class="err">Please enter your name.</small>
         </div>
-        <div class="field" data-field="designation">
-          <label>Designation <span class="req">*</span></label>
-          <input type="text" name="designation" placeholder="e.g. Operations Manager" />
-          <small class="err">Please enter your designation.</small>
+        <!-- UPDATED: Designation changed to Emp id -->
+        <div class="field" data-field="empid">
+          <label>Emp id <span class="req">*</span></label>
+          <input type="text" name="empid" placeholder="e.g. EMP1234" />
+          <small class="err">Please enter your employee ID.</small>
         </div>
       </div>
 
@@ -566,7 +567,8 @@
 
   function validate(){
     let ok = true;
-    ['name','designation','company','email'].forEach(f => {
+    // UPDATED: Replaced 'designation' with 'empid' in the validation array
+    ['name','empid','company','email'].forEach(f => {
       if (!form[f].value.trim()){ setFieldError(f); ok = false; } else clearFieldError(f);
     });
     const mobileVal = form.mobile.value.trim();
