@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Arham — Get Covered</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0F2438;
+    --teal:#1B4D4A;
+    --brass:#B98B3E;
+    --brass-light:#E8D3A4;
+    --paper:#EDF1EF;
+    --paper-raised:#FFFFFF;
+    --charcoal:#1A2B2A;
+    --muted:#5B6C6A;
+    --line:#D6DEDA;
+    --error:#B23A2E;
+    --success:#1B4D4A;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--charcoal);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;}
+
+  .wrap{
+    max-width:1080px;
+    margin:0 auto;
+    padding:56px 24px 80px;
+  }
+
+  /* ---------- Header ---------- */
+  .brandbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:48px;
+  }
+  .logo{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:22px;
+    color:var(--ink);
+    letter-spacing:0.01em;
+  }
+  .logo .mark{
+    width:30px;height:30px;
+    border-radius:50%;
+    background:conic-gradient(from 210deg, var(--brass), var(--teal), var(--ink), var(--brass));
+    flex:none;
+  }
+  .tagline{
+    font-size:13px;
+    color:var(--muted);
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    display:grid;
+    grid-template-columns:1.1fr 0.9fr;
+    gap:56px;
+    align-items:end;
+    margin-bottom:52px;
+  }
+  .hero h1{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:clamp(34px,4.2vw,54px);
+    line-height:1.08;
+    margin:0 0 18px;
+    color:var(--ink);
+  }
+  .hero h1 em{
+    font-style:italic;
+    color:var(--teal);
+  }
+  .hero p{
+    font-size:16px;
+    line-height:1.6;
+    color:var(--muted);
+    max-width:46ch;
+    margin:0;
+  }
+  .hero-stats{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    border-left:2px solid var(--brass);
+    padding-left:20px;
+  }
+  .hero-stats .stat b{
+    display:block;
+    font-family:'Fraunces',serif;
+    font-size:15px;
+    color:var(--ink);
+    font-weight:600;
+  }
+  .hero-stats .stat span{
+    font-size:13px;
+    color:var(--muted);
+  }
+
+  /* ---------- Layout: rail + form ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns:220px 1fr;
+    gap:0;
+    background:var(--paper-raised);
+    border-radius:16px;
+    border:1px solid var(--line);
+    overflow:hidden;
+    box-shadow:0 24px 60px -30px rgba(15,36,56,0.25);
+  }
+
+  /* Coverage rail — signature element, reflects the 5 product options */
+  .rail{
+    background:var(--ink);
+    color:#fff;
+    padding:36px 24px;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+  }
+  .rail-title{
+    font-size:11px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,0.55);
+    margin-bottom:20px;
+  }
+  .rail-item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 10px;
+    border-radius:8px;
+    transition:background 0.25s ease, opacity 0.25s ease;
+    opacity:0.5;
+  }
+  .rail-item.active{
+    background:rgba(255,255,255,0.08);
+    opacity:1;
+  }
+  .rail-item .icon{
+    width:22px;height:22px;flex:none;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .rail-item .icon svg{width:20px;height:20px;stroke:var(--brass-light);}
+  .rail-item.active .icon svg{stroke:var(--brass);}
+  .rail-item span{font-size:14px;font-weight:500;}
+  .rail-foot{
+    margin-top:auto;
+    padding-top:24px;
+    border-top:1px solid rgba(255,255,255,0.14);
+    font-size:12px;
+    color:rgba(255,255,255,0.5);
+    line-height:1.6;
+  }
+
+  /* ---------- Form ---------- */
+  form{
+    padding:40px 44px 44px;
+  }
+  .form-head{
+    margin-bottom:28px;
+  }
+  .form-head h2{
+    font-family:'Fraunces',serif;
+    font-size:24px;
+    font-weight:500;
+    margin:0 0 6px;
+    color:var(--ink);
+  }
+  .form-head p{
+    margin:0;
+    font-size:14px;
+    color:var(--muted);
+  }
+
+  .field-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+  }
+  .field{
+    margin-bottom:20px;
+  }
+  .field label{
+    display:block;
+    font-size:12.5px;
+    font-weight:600;
+    letter-spacing:0.02em;
+    color:var(--ink);
+    margin-bottom:7px;
+  }
+  .field label .req{color:var(--brass);}
+  .field input[type=text],
+  .field input[type=tel],
+  .field input[type=email],
+  .field select{
+    width:100%;
+    padding:12px 14px;
+    font-family:'Inter',sans-serif;
+    font-size:14.5px;
+    color:var(--charcoal);
+    background:#FBFBF9;
+    border:1px solid var(--line);
+    border-radius:8px;
+    outline:none;
+    transition:border-color 0.2s ease, box-shadow 0.2s ease;
+    appearance:none;
+  }
+  .field select{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%235B6C6A' stroke-width='1.6' fill='none' fill-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 14px center;
+    padding-right:36px;
+  }
+  .field input:focus,
+  .field select:focus{
+    border-color:var(--brass);
+    box-shadow:0 0 0 3px rgba(185,139,62,0.18);
+  }
+  .field small.err{
+    display:none;
+    color:var(--error);
+    font-size:12px;
+    margin-top:6px;
+  }
+  .field.invalid input,
+  .field.invalid select{
+    border-color:var(--error);
+  }
+  .field.invalid small.err{display:block;}
+
+  /* File upload */
+  .dropzone{
+    border:1.5px dashed var(--line);
+    border-radius:10px;
+    padding:22px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    cursor:pointer;
+    background:#FBFBF9;
+    transition:border-color 0.2s ease, background 0.2s ease;
+  }
+  .dropzone:hover, .dropzone.dragover{
+    border-color:var(--brass);
+    background:#FBF6EC;
+  }
+  .dropzone .dz-icon{
+    width:38px;height:38px;flex:none;
+    border-radius:50%;
+    background:var(--paper);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .dropzone .dz-icon svg{width:18px;height:18px;stroke:var(--teal);}
+  .dropzone .dz-text b{display:block;font-size:14px;color:var(--ink);}
+  .dropzone .dz-text span{font-size:12.5px;color:var(--muted);}
+  .dropzone input[type=file]{display:none;}
+  .file-chip{
+    display:none;
+    margin-top:10px;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    color:var(--teal);
+    font-weight:600;
+  }
+  .file-chip.show{display:flex;}
+  .file-chip button{
+    border:none;background:none;color:var(--error);
+    cursor:pointer;font-size:13px;text-decoration:underline;
+    font-family:inherit;
+  }
+
+  .submit-row{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    margin-top:8px;
+  }
+  button.submit{
+    background:var(--ink);
+    color:#fff;
+    border:none;
+    padding:14px 30px;
+    font-size:14.5px;
+    font-weight:600;
+    border-radius:8px;
+    cursor:pointer;
+    transition:background 0.2s ease, transform 0.15s ease;
+    font-family:'Inter',sans-serif;
+  }
+  button.submit:hover{background:#173049;}
+  button.submit:active{transform:translateY(1px);}
+  button.submit:disabled{opacity:0.6;cursor:not-allowed;}
+
+  .status{
+    font-size:13.5px;
+    font-weight:500;
+  }
+  .status.ok{color:var(--success);}
+  .status.bad{color:var(--error);}
+
+  .privacy-note{
+    margin-top:22px;
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.6;
+    border-top:1px solid var(--line);
+    padding-top:18px;
+  }
+
+  /* Success panel */
+  .success-panel{
+    display:none;
+    padding:60px 44px;
+    text-align:center;
+  }
+  .success-panel.show{display:block;}
+  .success-panel .check{
+    width:56px;height:56px;
+    border-radius:50%;
+    background:var(--teal);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 20px;
+  }
+  .success-panel .check svg{width:26px;height:26px;stroke:#fff;}
+  .success-panel h2{
+    font-family:'Fraunces',serif;
+    font-size:24px;
+    color:var(--ink);
+    margin:0 0 8px;
+  }
+  .success-panel p{color:var(--muted);font-size:14.5px;margin:0 0 24px;}
+  .success-panel button{
+    background:none;
+    border:1px solid var(--line);
+    padding:10px 20px;
+    border-radius:8px;
+    font-size:13.5px;
+    font-weight:600;
+    cursor:pointer;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+  }
+
+  @media (max-width:820px){
+    .hero{grid-template-columns:1fr;gap:28px;}
+    .hero-stats{border-left:none;border-top:2px solid var(--brass);padding-left:0;padding-top:16px;flex-direction:row;flex-wrap:wrap;}
+    .grid{grid-template-columns:1fr;}
+    .rail{flex-direction:row;flex-wrap:wrap;padding:22px 24px;}
+    .rail-foot{display:none;}
+    .rail-title{width:100%;}
+    form{padding:30px 24px 34px;}
+    .field-row{grid-template-columns:1fr;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brandbar">
+    <div class="logo"><span class="mark"></span>Arham</div>
+    <div class="tagline">Insurance, arranged properly</div>
+  </div>
+
+  <div class="hero">
+    <div>
+      <h1>Tell us what you're<br/><em>protecting</em>, we'll take it from there.</h1>
+      <p>Share your details and current policy, and an Arham advisor will get back to you with the right cover — no jargon, no chasing paperwork.</p>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><b>5 product lines</b><span>Two-wheeler to home, under one roof</span></div>
+      <div class="stat"><b>1 form, 2 minutes</b><span>We follow up, you don't have to</span></div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="rail" id="rail">
+      <div class="rail-title">Coverage</div>
+      <div class="rail-item" data-product="2-Wheeler">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M5 17l4-9h5l2 4h3M9 8h3"/></svg></span>
+        <span>2-Wheeler</span>
+      </div>
+      <div class="rail-item" data-product="4-Wheeler">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-6a2 2 0 012-1h10a2 2 0 012 1l2 6"/><path d="M3 13h18v4a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H6v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-4z"/><circle cx="7.5" cy="16.5" r="1.2"/><circle cx="16.5" cy="16.5" r="1.2"/></svg></span>
+        <span>4-Wheeler</span>
+      </div>
+      <div class="rail-item" data-product="Health">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.35-9.5-9C.8 8.2 3 4 7 4c2 0 3.5 1.2 5 3 1.5-1.8 3-3 5-3 4 0 6.2 4.2 4.5 8-2.5 4.65-9.5 9-9.5 9z"/></svg></span>
+        <span>Health</span>
+      </div>
+      <div class="rail-item" data-product="Life">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 5-3.5 7.5-7 9-3.5-1.5-7-4-7-9V6l7-3z"/></svg></span>
+        <span>Life</span>
+      </div>
+      <div class="rail-item" data-product="Home Insurance">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9"/></svg></span>
+        <span>Home Insurance</span>
+      </div>
+      <div class="rail-foot">Select a product in the form to see it highlighted here.</div>
+    </div>
+
+    <form id="leadForm" novalidate>
+      <div class="form-head">
+        <h2>Your details</h2>
+        <p>Fields marked <span style="color:var(--brass)">*</span> are required.</p>
+      </div>
+
+      <div class="field-row">
+        <div class="field" data-field="name">
+          <label>Name <span class="req">*</span></label>
+          <input type="text" name="name" autocomplete="name" placeholder="Full name" />
+          <small class="err">Please enter your name.</small>
+        </div>
+        <div class="field" data-field="designation">
+          <label>Designation <span class="req">*</span></label>
+          <input type="text" name="designation" placeholder="e.g. Operations Manager" />
+          <small class="err">Please enter your designation.</small>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field" data-field="company">
+          <label>Company <span class="req">*</span></label>
+          <input type="text" name="company" placeholder="Company name" />
+          <small class="err">Please enter your company.</small>
+        </div>
+        <div class="field" data-field="mobile">
+          <label>Mobile Number <span class="req">*</span></label>
+          <input type="tel" name="mobile" autocomplete="tel" placeholder="10-digit mobile number" />
+          <small class="err">Please enter a valid mobile number.</small>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field" data-field="email">
+          <label>Email <span class="req">*</span></label>
+          <input type="email" name="email" autocomplete="email" placeholder="name@company.com" />
+          <small class="err">Please enter a valid email.</small>
+        </div>
+        <div class="field" data-field="product">
+          <label>Product <span class="req">*</span></label>
+          <select name="product">
+            <option value="" disabled selected>Select a product</option>
+            <option value="2-Wheeler">2-Wheeler</option>
+            <option value="4-Wheeler">4-Wheeler</option>
+            <option value="Health">Health</option>
+            <option value="Life">Life</option>
+            <option value="Home Insurance">Home Insurance</option>
+          </select>
+          <small class="err">Please select a product.</small>
+        </div>
+      </div>
+
+      <div class="field" data-field="policyPdf">
+        <label>Policy PDF <span class="req">*</span></label>
+        <label class="dropzone" id="dropzone">
+          <span class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg></span>
+          <span class="dz-text"><b>Upload your current policy</b><span>PDF only, up to 10MB — click or drag a file here</span></span>
+          <input type="file" name="policyPdf" id="policyPdf" accept="application/pdf" />
+        </label>
+        <div class="file-chip" id="fileChip">
+          <span id="fileName"></span> · <button type="button" id="fileRemove">remove</button>
+        </div>
+        <small class="err">Please attach the policy PDF (PDF only).</small>
+      </div>
+
+      <div class="submit-row">
+        <button type="submit" class="submit" id="submitBtn">Send my details</button>
+        <span class="status" id="statusMsg"></span>
+      </div>
+
+      <p class="privacy-note">By submitting, you agree that Arham may contact you about the selected product. Your information and uploaded policy are stored securely and used only for this purpose.</p>
+    </form>
+
+    <div class="success-panel" id="successPanel">
+      <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg></div>
+      <h2>Got it — thank you.</h2>
+      <p>An Arham advisor will reach out shortly with next steps.</p>
+      <button type="button" id="resetBtn">Submit another response</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const form = document.getElementById('leadForm');
+  const rail = document.getElementById('rail');
+  const productSelect = form.product;
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('policyPdf');
+  const fileChip = document.getElementById('fileChip');
+  const fileName = document.getElementById('fileName');
+  const fileRemove = document.getElementById('fileRemove');
+  const submitBtn = document.getElementById('submitBtn');
+  const statusMsg = document.getElementById('statusMsg');
+  const successPanel = document.getElementById('successPanel');
+  const resetBtn = document.getElementById('resetBtn');
+
+  // Highlight the coverage rail based on selected product
+  productSelect.addEventListener('change', () => {
+    [...rail.querySelectorAll('.rail-item')].forEach(item => {
+      item.classList.toggle('active', item.dataset.product === productSelect.value);
+    });
+    clearFieldError('product');
+  });
+
+  // File handling
+  function showFile(file){
+    fileName.textContent = file.name;
+    fileChip.classList.add('show');
+    clearFieldError('policyPdf');
+  }
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) showFile(fileInput.files[0]);
+  });
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === 'application/pdf'){
+      fileInput.files = e.dataTransfer.files;
+      showFile(file);
+    }
+  });
+  fileRemove.addEventListener('click', (e) => {
+    e.preventDefault();
+    fileInput.value = '';
+    fileChip.classList.remove('show');
+  });
+
+  // Validation
+  function setFieldError(name){
+    const el = form.querySelector(`[data-field="${name}"]`);
+    if (el) el.classList.add('invalid');
+  }
+  function clearFieldError(name){
+    const el = form.querySelector(`[data-field="${name}"]`);
+    if (el) el.classList.remove('invalid');
+  }
+
+  function validate(){
+    let ok = true;
+    ['name','designation','company','email'].forEach(f => {
+      if (!form[f].value.trim()){ setFieldError(f); ok = false; } else clearFieldError(f);
+    });
+    const mobileVal = form.mobile.value.trim();
+    if (!/^[0-9+\-\s]{7,15}$/.test(mobileVal)){ setFieldError('mobile'); ok = false; } else clearFieldError('mobile');
+
+    const emailVal = form.email.value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)){ setFieldError('email'); ok = false; }
+
+    if (!productSelect.value){ setFieldError('product'); ok = false; }
+
+    if (!fileInput.files[0]){ setFieldError('policyPdf'); ok = false; }
+
+    return ok;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    statusMsg.textContent = '';
+    statusMsg.className = 'status';
+
+    if (!validate()){
+      statusMsg.textContent = 'Please fix the highlighted fields.';
+      statusMsg.classList.add('bad');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+
+    try{
+      const fd = new FormData(form);
+      const res = await fetch('/api/submit', { method: 'POST', body: fd });
+      const data = await res.json();
+
+      if (!res.ok || !data.success){
+        throw new Error(data.error || 'Submission failed.');
+      }
+
+      form.style.display = 'none';
+      successPanel.classList.add('show');
+    }catch(err){
+      statusMsg.textContent = err.message || 'Something went wrong. Please try again.';
+      statusMsg.classList.add('bad');
+    }finally{
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Send my details';
+    }
+  });
+
+  resetBtn.addEventListener('click', () => {
+    form.reset();
+    fileChip.classList.remove('show');
+    [...rail.querySelectorAll('.rail-item')].forEach(item => item.classList.remove('active'));
+    form.style.display = 'block';
+    successPanel.classList.remove('show');
+    statusMsg.textContent = '';
+  });
+</script>
+</body>
+</html>
