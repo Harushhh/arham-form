@@ -15,8 +15,8 @@ const { DATABASE_URL, ADMIN_USER, ADMIN_PASSWORD } = process.env;
 
 if (!DATABASE_URL) {
   console.error(
-    "Missing DATABASE_URL environment variable. On Railway, add a Postgres " +
-      "plugin to this project and it will be injected automatically. " +
+    "Missing DATABASE_URL environment variable. On Render, set this in " +
+      "your service's Environment tab (paste your Neon connection string). " +
       "See README.md."
   );
 }
@@ -52,7 +52,7 @@ async function initDb() {
 // ---------- File upload (memory storage, then push to Postgres) ----------
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
   fileFilter: (req, file, cb) => {
     if (file.mimetype === "application/pdf") {
       cb(null, true);

@@ -479,7 +479,7 @@
         <label>Policy PDF <span class="req">*</span></label>
         <label class="dropzone" id="dropzone">
           <span class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg></span>
-          <span class="dz-text"><b>Upload your current policy</b><span>PDF only, up to 10MB — click or drag a file here</span></span>
+          <span class="dz-text"><b>Upload your current policy</b><span>PDF only, up to 20MB — click or drag a file here</span></span>
           <input type="file" name="policyPdf" id="policyPdf" accept="application/pdf" />
         </label>
         <div class="file-chip" id="fileChip">
@@ -599,7 +599,20 @@
     try{
       const fd = new FormData(form);
       const res = await fetch('/api/submit', { method: 'POST', body: fd });
-      const data = await res.json();
+
+      const raw = await res.text();
+      let data;
+      try{
+        data = JSON.parse(raw);
+      }catch(parseErr){
+        // Server (or a proxy in front of it) returned something that isn't JSON —
+        // usually means the request was rejected before reaching our code
+        // (e.g. file too large). Surface a clear message instead of crashing.
+        if (res.status === 413){
+          throw new Error('That file is too large. Please upload a PDF under 20MB.');
+        }
+        throw new Error(`Server error (${res.status}). Please try again.`);
+      }
 
       if (!res.ok || !data.success){
         throw new Error(data.error || 'Submission failed.');
