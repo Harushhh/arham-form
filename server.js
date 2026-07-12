@@ -155,8 +155,17 @@ app.get("/admin", requireAdmin, async (req, res) => {
       <html><head><meta charset="utf-8"><title>Arham — Submissions</title>
       <style>
         body{font-family:Inter,Arial,sans-serif;margin:0;padding:32px;background:#EDF1EF;color:#1A2B2A;}
+        .head-row{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
         h1{font-size:20px;margin-bottom:4px;}
-        p.count{color:#5B6C6A;font-size:13px;margin-top:0;margin-bottom:20px;}
+        p.count{color:#5B6C6A;font-size:13px;margin-top:0;}
+        .export-btn{
+          display:inline-flex;align-items:center;gap:8px;
+          background:#0F2438;color:#fff;text-decoration:none;
+          font-size:13.5px;font-weight:600;
+          padding:10px 18px;border-radius:8px;
+          transition:background 0.2s ease;
+        }
+        .export-btn:hover{background:#173049;}
         table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.06);}
         th,td{padding:10px 12px;text-align:left;font-size:13.5px;border-bottom:1px solid #E5E9E6;}
         th{background:#0F2438;color:#fff;font-weight:600;position:sticky;top:0;}
@@ -164,8 +173,13 @@ app.get("/admin", requireAdmin, async (req, res) => {
         a{color:#1B4D4A;font-weight:600;}
       </style></head>
       <body>
-        <h1>Arham — Submissions</h1>
-        <p class="count">${rows.length} submission${rows.length === 1 ? "" : "s"}</p>
+        <div class="head-row">
+          <div>
+            <h1>Arham — Submissions</h1>
+            <p class="count">${rows.length} submission${rows.length === 1 ? "" : "s"}</p>
+          </div>
+          <a class="export-btn" href="/admin/export.csv" download>⬇ Export to Excel (CSV)</a>
+        </div>
         <table>
           <thead><tr>
             <th>Date</th><th>Name</th><th>Designation</th><th>Company</th>
@@ -198,6 +212,50 @@ app.get("/admin/file/:id", requireAdmin, async (req, res) => {
     res.status(500).send("Could not load file.");
   }
 });
+
+// ---------- Admin: export all submissions as CSV (opens in Excel) ----------
+app.get("/admin/export.csv", requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT created_at, name, designation, company, mobile, email, product, file_name
+       FROM submissions ORDER BY created_at DESC`
+    );
+
+    const headers = [
+      "Date", "Name", "Designation", "Company", "Mobile", "Email", "Product", "Policy PDF Filename",
+    ];
+    const csvRows = rows.map((r) => [
+      new Date(r.created_at).toLocaleString(),
+      r.name,
+      r.designation,
+      r.company,
+      r.mobile,
+      r.email,
+      r.product,
+      r.file_name,
+    ]);
+
+    const csv = [headers, ...csvRows]
+      .map((row) => row.map(csvEscape).join(","))
+      .join("\r\n");
+
+    res.set("Content-Type", "text/csv; charset=utf-8");
+    res.set("Content-Disposition", `attachment; filename="arham-submissions-${Date.now()}.csv"`);
+    // Byte-order mark so Excel opens UTF-8 CSVs cleanly on Windows
+    res.send("\uFEFF" + csv);
+  } catch (err) {
+    console.error("CSV export error:", err);
+    res.status(500).send("Could not export submissions.");
+  }
+});
+
+function csvEscape(value) {
+  const str = value === null || value === undefined ? "" : String(value);
+  if (/[",\r\n]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
 
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (c) => ({
