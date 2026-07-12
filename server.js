@@ -24,23 +24,9 @@ if (!DATABASE_URL) {
 // ---------- Postgres ----------
 const pool = new Pool({
   connectionString: DATABASE_URL,
-  // Managed Postgres providers (Neon, Supabase, Railway, etc.) require SSL.
-  // Only skip it for a plain local database.
   ssl: DATABASE_URL && !DATABASE_URL.includes("localhost")
     ? { rejectUnauthorized: false }
     : false,
-  // Serverless functions (Vercel, etc.) spin up fresh per-request, so a large
-  // long-lived pool works against you here — keep it small and fail fast
-  // instead of hanging until the function times out.
-  max: 3,
-  idleTimeoutMillis: 10000,
-  connectionTimeoutMillis: 10000,
-});
-
-pool.on("error", (err) => {
-  // Catches errors on idle clients (e.g. connection dropped by the DB host)
-  // so they don't crash the process — just log them.
-  console.error("Unexpected Postgres pool error:", err);
 });
 
 async function initDb() {
@@ -49,7 +35,7 @@ async function initDb() {
       id SERIAL PRIMARY KEY,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       name TEXT NOT NULL,
-      empid TEXT NOT NULL, -- UPDATED: Changed from designation
+      empid TEXT NOT NULL,
       company TEXT NOT NULL,
       mobile TEXT NOT NULL,
       email TEXT NOT NULL,
@@ -61,7 +47,12 @@ async function initDb() {
   `);
 }
 
-// ---------- File upload (memory storage, then push to Postgres) ----------
+// Initialize Database (Errors are caught so it doesn't crash serverless functions)
+initDb().catch((err) => {
+  console.error("Failed to initialize database:", err);
+});
+
+// ---------- File upload ----------
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
@@ -80,7 +71,6 @@ app.use(express.json());
 // ---------- Submit endpoint ----------
 app.post("/api/submit", upload.single("policyPdf"), async (req, res) => {
   try {
-    // UPDATED: Destructure empid instead of designation
     const { name, empid, company, mobile, email, product } = req.body;
 
     if (!name || !empid || !company || !mobile || !email || !product) {
@@ -96,7 +86,7 @@ app.post("/api/submit", upload.single("policyPdf"), async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
       [
         name,
-        empid, // UPDATED
+        empid,
         company,
         mobile,
         email,
@@ -109,13 +99,11 @@ app.post("/api/submit", upload.single("policyPdf"), async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    console.error("Submission error:", err.message);
-    console.error(err.stack);
+    console.error("Submission error:", err);
     res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 });
 
-// Multer error handler (e.g. file too large / wrong type)
 app.use((err, req, res, next) => {
   if (err) {
     return res.status(400).json({ error: err.message || "Upload failed." });
@@ -123,7 +111,7 @@ app.use((err, req, res, next) => {
   next();
 });
 
-// ---------- Simple admin auth ----------
+// ---------- Admin Auth ----------
 function requireAdmin(req, res, next) {
   if (!ADMIN_USER || !ADMIN_PASSWORD) {
     return res
@@ -143,7 +131,6 @@ function requireAdmin(req, res, next) {
 // ---------- Admin: list submissions ----------
 app.get("/admin", requireAdmin, async (req, res) => {
   try {
-    // UPDATED: Selected empid instead of designation
     const { rows } = await pool.query(
       `SELECT id, created_at, name, empid, company, mobile, email, product, file_name
        FROM submissions ORDER BY created_at DESC`
@@ -155,7 +142,7 @@ app.get("/admin", requireAdmin, async (req, res) => {
       <tr>
         <td>${new Date(r.created_at).toLocaleString()}</td>
         <td>${escapeHtml(r.name)}</td>
-        <td>${escapeHtml(r.empid)}</td> <!-- UPDATED -->
+        <td>${escapeHtml(r.empid)}</td>
         <td>${escapeHtml(r.company)}</td>
         <td>${escapeHtml(r.mobile)}</td>
         <td>${escapeHtml(r.email)}</td>
@@ -197,7 +184,7 @@ app.get("/admin", requireAdmin, async (req, res) => {
         </div>
         <table>
           <thead><tr>
-            <th>Date</th><th>Name</th><th>Emp id</th><th>Company</th> <!-- UPDATED -->
+            <th>Date</th><th>Name</th><th>Emp id</th><th>Company</th>
             <th>Mobile</th><th>Email</th><th>Product</th><th>Policy PDF</th>
           </tr></thead>
           <tbody>${tableRows || `<tr><td colspan="8">No submissions yet.</td></tr>`}</tbody>
@@ -228,10 +215,9 @@ app.get("/admin/file/:id", requireAdmin, async (req, res) => {
   }
 });
 
-// ---------- Admin: export all submissions as CSV (opens in Excel) ----------
+// ---------- Admin: export CSV ----------
 app.get("/admin/export.csv", requireAdmin, async (req, res) => {
   try {
-    // UPDATED: Selected empid instead of designation
     const { rows } = await pool.query(
       `SELECT id, created_at, name, empid, company, mobile, email, product, file_name
        FROM submissions ORDER BY created_at DESC`
@@ -239,12 +225,10 @@ app.get("/admin/export.csv", requireAdmin, async (req, res) => {
 
     const baseUrl = `${req.protocol}://${req.get("host")}`;
 
-    // UPDATED: Header changed to Emp ID
     const headers = [
       "Date", "Name", "Emp ID", "Company", "Mobile", "Email", "Product", "Policy PDF Filename", "Policy PDF Link"
     ];
     
-    // UPDATED: Mapped r.empid to the row output
     const csvRows = rows.map((r) => [
       new Date(r.created_at).toLocaleString(),
       r.name,
@@ -263,7 +247,6 @@ app.get("/admin/export.csv", requireAdmin, async (req, res) => {
 
     res.set("Content-Type", "text/csv; charset=utf-8");
     res.set("Content-Disposition", `attachment; filename="arham-submissions-${Date.now()}.csv"`);
-    // Byte-order mark so Excel opens UTF-8 CSVs cleanly on Windows
     res.send("\uFEFF" + csv);
   } catch (err) {
     console.error("CSV export error:", err);
@@ -285,13 +268,12 @@ function escapeHtml(str) {
   }[c]));
 }
 
-initDb()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Arham form server running on port ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error("Failed to initialize database:", err);
-    process.exit(1);
+// Ensure the server only calls .listen() if NOT deployed on Vercel
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Arham form server running on port ${PORT}`);
   });
+}
+
+// Required by Vercel to route requests dynamically
+module.exports = app;
