@@ -216,14 +216,21 @@ app.get("/admin/file/:id", requireAdmin, async (req, res) => {
 // ---------- Admin: export all submissions as CSV (opens in Excel) ----------
 app.get("/admin/export.csv", requireAdmin, async (req, res) => {
   try {
+    // UPDATED: Added 'id' to the SELECT query to generate the download link
     const { rows } = await pool.query(
-      `SELECT created_at, name, designation, company, mobile, email, product, file_name
+      `SELECT id, created_at, name, designation, company, mobile, email, product, file_name
        FROM submissions ORDER BY created_at DESC`
     );
 
+    // Capture the base URL for the clickable link
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+
+    // UPDATED: Added "Policy PDF Link" to the headers array
     const headers = [
-      "Date", "Name", "Designation", "Company", "Mobile", "Email", "Product", "Policy PDF Filename",
+      "Date", "Name", "Designation", "Company", "Mobile", "Email", "Product", "Policy PDF Filename", "Policy PDF Link"
     ];
+    
+    // UPDATED: Appended the full URL to the csvRows mapping
     const csvRows = rows.map((r) => [
       new Date(r.created_at).toLocaleString(),
       r.name,
@@ -233,6 +240,7 @@ app.get("/admin/export.csv", requireAdmin, async (req, res) => {
       r.email,
       r.product,
       r.file_name,
+      `${baseUrl}/admin/file/${r.id}`
     ]);
 
     const csv = [headers, ...csvRows]
