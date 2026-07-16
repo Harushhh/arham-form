@@ -69,33 +69,59 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 
 // ---------- Submit endpoint ----------
-app.post("/api/submit", upload.single("policyPdf"), async (req, res) => {
+// UPDATED: Using upload.any() to handle dynamically named files from the multi-step form
+app.post("/api/submit", upload.any(), async (req, res) => {
   try {
-    const { name, empid, company, mobile, email, product } = req.body;
+    const { name, empid, company, mobile, email } = req.body;
 
-    if (!name || !empid || !company || !mobile || !email || !product) {
-      return res.status(400).json({ error: "All fields are required." });
-    }
-    if (!req.file) {
-      return res.status(400).json({ error: "Please attach the policy PDF." });
+    if (!name || !empid || !company || !mobile || !email) {
+      return res.status(400).json({ error: "User details are required." });
     }
 
-    await pool.query(
-      `INSERT INTO submissions
-        (name, empid, company, mobile, email, product, file_name, file_mime, file_data)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-      [
-        name,
-        empid,
-        company,
-        mobile,
-        email,
-        product,
-        req.file.originalname,
-        req.file.mimetype,
-        req.file.buffer,
-      ]
-    );
+    const products = ['2-Wheeler', '4-Wheeler', 'Health', 'Life', 'Home Insurance'];
+    let insertedCount = 0;
+
+    // Iterate over all products to find which ones the user selected "Yes" for
+    for (const product of products) {
+      const cleanKey = product.replace(/\s+/g, '');
+      const hasPolicy = req.body[`has${cleanKey}`] === 'true';
+
+      if (hasPolicy) {
+        // Find the associated file from req.files
+        const file = req.files ? req.files.find(f => f.fieldname === `file${cleanKey}`) : null;
+
+        await pool.query(
+          `INSERT INTO submissions
+            (name, empid, company, mobile, email, product, file_name, file_mime, file_data)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+          [
+            name,
+            empid,
+            company,
+            mobile,
+            email,
+            product,
+            file ? file.originalname : "Not provided",
+            file ? file.mimetype : "text/plain",
+            file ? file.buffer : Buffer.from("No file uploaded"),
+          ]
+        );
+        insertedCount++;
+      }
+    }
+
+    // If the user answered "No" to everything, still record the lead
+    if (insertedCount === 0) {
+      await pool.query(
+        `INSERT INTO submissions
+          (name, empid, company, mobile, email, product, file_name, file_mime, file_data)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [
+          name, empid, company, mobile, email,
+          "None", "N/A", "text/plain", Buffer.from("")
+        ]
+      );
+    }
 
     res.json({ success: true });
   } catch (err) {
