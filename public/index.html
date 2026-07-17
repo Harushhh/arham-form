@@ -603,8 +603,10 @@
             <div class="file-chip" id="chip-${htmlId}">
               <span id="filename-${htmlId}"></span> · <button type="button" onclick="removeFile('${product}', event)">remove</button>
             </div>
+            
             <div class="submit-row">
-              <button type="button" class="submit secondary-btn" onclick="goToStep(${stepIndex + 1})">Skip for now</button>
+              <button type="button" class="submit secondary-btn" onclick="requireFileAndAdvance('${product}', ${stepIndex + 1})">Continue</button>
+              <span id="err-${htmlId}" style="display:none; color:var(--error); margin-left:15px; font-size:13.5px; font-weight:500;">Please attach your policy PDF to continue.</span>
             </div>
           </div>
         </div>
@@ -713,9 +715,21 @@
     btns[1].classList.add('selected');
     
     document.getElementById(`upload-${htmlId}`).classList.remove('show');
+    document.getElementById(`err-${htmlId}`).style.display = 'none'; // clear errors
     
     // Auto-advance
     setTimeout(() => goToStep(currentStep + 1), 300);
+  }
+
+  // Enforce Mandatory File Upload
+  function requireFileAndAdvance(product, nextStep) {
+    const htmlId = product.replace(/\s+/g, '-');
+    if (state.policies[product].hasPolicy && !state.policies[product].file) {
+      document.getElementById(`err-${htmlId}`).style.display = 'inline-block';
+    } else {
+      document.getElementById(`err-${htmlId}`).style.display = 'none';
+      goToStep(nextStep);
+    }
   }
 
   // File Handlers
@@ -726,6 +740,7 @@
     document.getElementById(`filename-${htmlId}`).textContent = file.name;
     document.getElementById(`chip-${htmlId}`).classList.add('show');
     document.getElementById(`dz-${htmlId}`).style.display = 'none';
+    document.getElementById(`err-${htmlId}`).style.display = 'none'; // hide error if they had one
 
     // Auto advance after successful upload
     setTimeout(() => goToStep(currentStep + 1), 700);
@@ -747,6 +762,15 @@
     statusMsg.textContent = '';
     statusMsg.className = 'status';
 
+    // Final safety check to ensure no mandatory files were missed
+    for (const product of products) {
+        if (state.policies[product].hasPolicy && !state.policies[product].file) {
+            statusMsg.textContent = `You selected Yes for ${product} but didn't attach the PDF. Please go back and upload it.`;
+            statusMsg.classList.add('bad');
+            return;
+        }
+    }
+
     submitBtn.disabled = true;
     submitBtn.textContent = 'Sending…';
 
@@ -757,11 +781,6 @@
       Object.keys(state.details).forEach(key => fd.append(key, state.details[key]));
       
       // Append dynamic policies mapping
-      /* Note: The existing backend (/api/submit) expects a single 'policyPdf' and 'product' string. 
-         This FormData structure attaches all selected products and their corresponding files 
-         to fulfill the multi-step payload requirement. You will need to update your backend 
-         server.js to parse multiple files (e.g., using multer.any() or fields array) to support this. */
-      
       products.forEach(product => {
           const policyData = state.policies[product];
           const cleanKey = product.replace(/\s+/g, '');

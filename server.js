@@ -69,7 +69,6 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 
 // ---------- Submit endpoint ----------
-// UPDATED: Using upload.any() to handle dynamically named files from the multi-step form
 app.post("/api/submit", upload.any(), async (req, res) => {
   try {
     const { name, empid, company, mobile, email } = req.body;
@@ -90,6 +89,11 @@ app.post("/api/submit", upload.any(), async (req, res) => {
         // Find the associated file from req.files
         const file = req.files ? req.files.find(f => f.fieldname === `file${cleanKey}`) : null;
 
+        // ENFORCING MANDATORY PDF UPLOAD ON BACKEND
+        if (!file) {
+          return res.status(400).json({ error: `You selected Yes for ${product} but the policy PDF was missing.` });
+        }
+
         await pool.query(
           `INSERT INTO submissions
             (name, empid, company, mobile, email, product, file_name, file_mime, file_data)
@@ -101,9 +105,9 @@ app.post("/api/submit", upload.any(), async (req, res) => {
             mobile,
             email,
             product,
-            file ? file.originalname : "Not provided",
-            file ? file.mimetype : "text/plain",
-            file ? file.buffer : Buffer.from("No file uploaded"),
+            file.originalname,
+            file.mimetype,
+            file.buffer,
           ]
         );
         insertedCount++;
